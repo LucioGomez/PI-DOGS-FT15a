@@ -1,11 +1,12 @@
-const {
-    Router
-} = require('express');
+const {Router} = require('express');
 const axios = require('axios')
-require('sequelize');
+const {Op}= require('sequelize');
 //Me traigo las tablas de la base de datos
-const {Dog,Temperament,dogs_temperaments} = require('../db.js');
-const { Sequelize } = require('sequelize');
+const {
+    Dog,
+    Temperament,
+    dogs_temperaments
+} = require('../db.js');
 // Importar todos los routers;
 // Ejemplo: const authRouter = require('./auth.js');
 
@@ -15,40 +16,70 @@ const router = Router();
 // Ejemplo: router.use('/auth', authRouter);
 //TraerData
 const loadData = async () => {
+   try{ 
     const arrdata = await axios.get('https://api.thedogapi.com/v1/breeds?api_key=bd856d2c-0fea-4f95-92e2-dc351be490dc')
-    //console.log("Esto es arrdata", arrdata)
-    // let {name,id} = arrdata.find
-    // console.log(arrdata.id)
-    const apiInfo = await arrdata.data.map(el =>{
-        return{
+    const apiInfo = await arrdata.data.map(el => {
+        return {
             name: el.name,
-            id: el.id,
             height: el.height.metric,
             weight: el.weight.metric,
-            img_url: el.image.url
-        } 
+            life_span: el.life_span,
+            url_image: el.image.url,
+            temperaments: el.temperament
+        }
     })
-    console.log(apiInfo);
+    ///console.log(apiInfo);
     return apiInfo;
-      
 }
-loadData()
-router.get("/dogs", async function (req, res, next) {
+    catch(error){
+        console.log(error);
+    }
+
+}
+//loadData()
+
+/////Traer de la bd
+
+
+
+
+router.get("/dogs", async function (req, res) {
+    ////// 
+    let name = req.query.name
+    console.log("Esto es name", name)
+    /////
     const dogsAll = await loadData();
     try {
         //traigo los datos de mi db
-        let doglenght = await Dog.findAll()
-            // si no hay datos los cargo 
-    if(!doglenght.lenght){ 
-        await Dog.bulkCreate(dogsAll) 
-         console.log(dogsAll)
-         res.json("entre al if")
+        const doglenght = await Dog.findAndCountAll()
+        // si no hay datos los cargo
+        console.log("eso es dog lengt",doglenght.count)
+        if (doglenght.count < 1) {
+            await Dog.bulkCreate(dogsAll)
+        }
+        // else{
+        //    res.json(doglenght.rows)
+        // }
+    } catch (error) {
+        console.log(error)
     }
-    //res.json("no entre")
-    }        
-     catch (error) {
-        next(error)
+    ///////////////////////////// Busco por name 
+    if (name) {
+      try{  
+        let breedName = await Dog.findAll({where:{
+             name: {
+                 [Op.iLike] : '%' + name + '%'
+             }
+        }})
+       // console.log('Esto es breedname',breedName)
+        return res.json(breedName)
     }
+     catch(error){
+       console.log(error)
+     }
+    }
+    ////////// filter
+
 })
 
 /*

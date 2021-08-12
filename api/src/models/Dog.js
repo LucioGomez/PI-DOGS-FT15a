@@ -6,11 +6,14 @@ const { DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
   // defino el modelo
   sequelize.define('dog', {
-    IDBDatabase: {
+     id:{
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       allowNull:false, 
       primaryKey: true
+    },
+    IDBDatabase: {
+      type: DataTypes.UUID,
     },
     name: {
       type: DataTypes.STRING,
@@ -29,12 +32,13 @@ module.exports = (sequelize) => {
     },
     url_image:{
       type: DataTypes.STRING,
-
     },
     createInDb:{
       type : DataTypes.BOOLEAN,
       defaultValue:false,
       allowNull:false
     }
+  },{
+    timestamps: false,
   });
 };
